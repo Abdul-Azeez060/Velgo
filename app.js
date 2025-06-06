@@ -14,6 +14,7 @@ const cluster = require("cluster");
 const os = require("os");
 const { Review } = require("./models/Reviews");
 const { ExpressError } = require("./utils/ExpressError");
+const { rateLimit } = require("express-rate-limit");
 
 main();
 
@@ -49,6 +50,16 @@ if (cluster.isMaster) {
   }
 } else {
   const app = express();
+
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 50,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  });
+
+  // Apply the rate limiting middleware to all requests.
+  app.use(limiter);
 
   app.set("views", path.join(__dirname, "views"));
   app.use(express.static(path.join(__dirname, "public"))); // css, js static files
